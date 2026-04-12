@@ -1,0 +1,15 @@
+[project]
+name = "agentic-dev"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "langchain-classic>=1.0.3",
+    "langchain-core>=1.2.28",
+    "langchain-openai>=1.1.12",
+    "pydantic>=2.12.5",
+    "pydantic-settings>=2.13.1",
+    "pytest>=9.0.3",
+    "rich>=15.0.0",
+]
