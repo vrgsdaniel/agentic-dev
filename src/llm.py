@@ -96,9 +96,8 @@ class Chatbot:
         return responses
 
     def explain_topic(self, topic: str, role: str = "helpful assistant", level: str = "simple") -> str:
-
-        messages = self.explain_topic_prompt.invoke({"role": role, "topic": topic, "level": level})
-        response = self.answer(self.llm, messages)
+        chain = self.explain_topic_prompt | self.llm
+        response = chain.invoke({"role": role, "topic": topic, "level": level})
         return response
 
     def retrieve_topic_info(self, model: type[BaseModel], topic: str, text: str) -> dict:
