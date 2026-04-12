@@ -2,16 +2,16 @@ from typing import List
 
 from langchain_openai import AzureChatOpenAI
 from langchain_core.language_models.chat_models import BaseChatModel
-
-
-from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser, JsonOutputParser
-
-from langchain_core.messages.ai import AIMessage
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import (
+    PydanticOutputParser,
+    StrOutputParser,
+    JsonOutputParser,
+)
+from langchain_classic.output_parsers import OutputFixingParser
 from pydantic import BaseModel
 
+from src.prompts import EXPLAIN_TOPIC, RETRIEVE_INFO
 from src.settings import AzureLLMSettings
-from typing import Generator
 
 
 class Chatbot:
@@ -24,106 +24,77 @@ class Chatbot:
         self.batch_requests = batch_requests
         self.base_llm = self._build_llm()
         self.parser = self.get_parser("str")
-        self.llm = self.build_chain(self.base_llm, self.parser)
-        self.explain_topic_prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", "You are a {role}. Be concise."),
-                ("human", "Explain {topic} in {level} terms."),
-            ]
-        )
-        self.retrieve_info_prompt = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    "You are a knowledgeable assistant.\n"
-                    "Fill in the following fields for the given topic:\n{fields}\n\n"
-                    "The user may provide some known values — treat them as ground truth "
-                    "and only infer the remaining fields.\n\n"
-                    "{format_instructions}",
-                ),
-                ("human", "Topic: {topic}\n" "Known values: {known}"),
-            ]
-        )
+        self.llm = self.base_llm | self.parser
 
-    def build_chain(self, model, parser):
-        return model | parser
+    def set_streaming(self, stream: bool):
+        self.stream_responses = stream
 
-    def get_parser(self, parser_type: str) -> StrOutputParser:
+    def get_parser(
+        self, parser_type: str, pydantic_model: type[BaseModel] | None = None
+    ):
         if parser_type == "str":
             return StrOutputParser()
         if parser_type == "json":
             return JsonOutputParser()
-        # Add more parser types here as needed
+        if parser_type == "pydantic":
+            if pydantic_model is None:
+                raise ValueError(
+                    "pydantic_model is required for parser_type='pydantic'"
+                )
+            return PydanticOutputParser(pydantic_object=pydantic_model)
         raise ValueError(f"Unsupported parser type: {parser_type}")
 
-    def _build_llm(self) -> AzureChatOpenAI:
+    def _build_llm(self) -> BaseChatModel:
         """
         Intended to be overridden by subclasses to construct the appropriate LLM instance based on settings.
         """
-        ...
+        raise NotImplementedError(
+            "Subclasses must implement _build_llm() to return an LLM instance."
+        )
 
-    @staticmethod
-    def _invoke(llm: BaseChatModel, prompt: str) -> AIMessage:
-        response = llm.invoke(prompt)
-        return response
-
-    @staticmethod
-    def _stream(llm: BaseChatModel, prompt: str) -> Generator[AIMessage, None, None]:
-        for chunk in llm.stream(prompt):
-            response = chunk
-            yield response
-
-    @staticmethod
-    def _batch(llm: BaseChatModel, prompts: List[str]) -> List[AIMessage]:
-        response = llm.batch(prompts)
-        return [r for r in response]
-
-    def answer(self, llm: BaseChatModel, question: str) -> str:
-        if llm is None:
-            llm = self.llm
-        response = self._invoke(llm, question) if not self.stream_responses else self._stream(llm, question)
-        return response
+    def _run(self, chain, input):
+        if self.stream_responses:
+            return chain.stream(input)
+        return chain.invoke(input)
 
     def chat(self, prompts: List[str]) -> List[str]:
         if self.batch_requests:
-            responses = self._batch(self.llm, prompts)
-            return responses
+            return self.llm.batch(prompts)
+        return [self._run(self.llm, prompt) for prompt in prompts]
 
-        responses = []
-        for prompt in prompts:
-            response = self.answer(self.llm, prompt)
-            responses.append(response)
-        return responses
+    def explain_topic(
+        self, topic: str, role: str = "helpful assistant", level: str = "simple"
+    ) -> str:
+        chain = EXPLAIN_TOPIC | self.llm
+        return self._run(chain, {"role": role, "topic": topic, "level": level})
 
-    def explain_topic(self, topic: str, role: str = "helpful assistant", level: str = "simple") -> str:
-        chain = self.explain_topic_prompt | self.llm
-        response = chain.invoke({"role": role, "topic": topic, "level": level})
-        return response
-
-    def retrieve_topic_info(self, model: type[BaseModel], topic: str, text: str) -> dict:
-        parser = PydanticOutputParser(pydantic_object=model)
-        fields_text = "\n".join(f"- {name}: {info.description}" for name, info in model.model_fields.items())
-        prompt = self.retrieve_info_prompt.partial(
+    def retrieve_topic_info(
+        self, model: type[BaseModel], topic: str, text: str
+    ) -> dict:
+        parser = self.get_parser("pydantic", pydantic_model=model)
+        fields_text = "\n".join(
+            f"- {name}: {info.description}" for name, info in model.model_fields.items()
+        )
+        prompt = RETRIEVE_INFO.partial(
             fields=fields_text, format_instructions=parser.get_format_instructions()
         )
-        llm = prompt | self.base_llm | parser
-        response = self.answer(
-            llm,
-            {
-                "topic": topic,
-                "known": text or "none",
-            },
+        fixing_parser = OutputFixingParser.from_llm(
+            parser=parser,
+            llm=self.base_llm,
         )
 
-        return response
+        chain = prompt | self.base_llm | fixing_parser
+        return self._run(chain, {"topic": topic, "known": text or "none"})
 
 
 class AzureChatbot(Chatbot):
     def __init__(self, stream_responses: bool = False, batch_requests: bool = True):
         self._settings = AzureLLMSettings()
-        super().__init__(stream_responses=stream_responses, batch_requests=batch_requests)
+        super().__init__(
+            stream_responses=stream_responses, batch_requests=batch_requests
+        )
 
-    def _build_llm(self) -> AzureChatOpenAI:
+    def _build_llm(self) -> BaseChatModel:
         """
         Construct an ``AzureChatOpenAI`` instance from the current settings.
         """
@@ -139,8 +110,12 @@ class AzureChatbot(Chatbot):
 
 class ChatbotFactory:
     @staticmethod
-    def create_chatbot(vendor: str, stream_responses: bool = False, batch_requests: bool = True) -> Chatbot:
+    def create_chatbot(
+        vendor: str, stream_responses: bool = False, batch_requests: bool = True
+    ) -> Chatbot:
         if vendor == "azure":
-            return AzureChatbot(stream_responses=stream_responses, batch_requests=batch_requests)
+            return AzureChatbot(
+                stream_responses=stream_responses, batch_requests=batch_requests
+            )
         # Add more vendors here as needed
         raise ValueError(f"Unsupported vendor: {vendor}")

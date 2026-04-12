@@ -4,7 +4,9 @@ from src.llm import ChatbotFactory
 
 
 if __name__ == "__main__":
-    chatbot = ChatbotFactory.create_chatbot(vendor="azure", stream_responses=False, batch_requests=False)
+    chatbot = ChatbotFactory.create_chatbot(
+        vendor="azure", stream_responses=False, batch_requests=True
+    )
     response = chatbot.chat(
         [
             "What's the largest city by area in the world?",
