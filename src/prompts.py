@@ -1,13 +1,13 @@
 from langchain_core.prompts import ChatPromptTemplate
 
-EXPLAIN_TOPIC = ChatPromptTemplate.from_messages(
+EXPLAIN_TOPIC_PROMPT = ChatPromptTemplate.from_messages(
     [
         ("system", "You are a {role}. Be concise."),
         ("human", "Explain {topic} in {level} terms."),
     ]
 )
 
-RETRIEVE_INFO = ChatPromptTemplate.from_messages(
+FETCH_TOPIC_PROMPT = ChatPromptTemplate.from_messages(
     [
         (
             "system",
@@ -18,5 +18,18 @@ RETRIEVE_INFO = ChatPromptTemplate.from_messages(
             "{format_instructions}",
         ),
         ("human", "Topic: {topic}\nKnown values: {known}"),
+    ]
+)
+
+
+RETRIEVE_FROM_CONTEXT_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "Answer using only the context below. "
+            "If the answer isn't in the context, say so.\n\n"
+            "Context:\n{context}",
+        ),
+        ("human", "{question}"),
     ]
 )

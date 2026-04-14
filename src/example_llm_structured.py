@@ -34,7 +34,7 @@ if __name__ == "__main__":
     chatbot = ChatbotFactory.create_chatbot(
         vendor="azure", stream_responses=False, batch_requests=False
     )
-    response = chatbot.retrieve_topic_info(
+    response = chatbot.fetch_topic_details(
         model=Planet,
         topic="Venus",
         text="",
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     for chunk in response:
         rprint(chunk, end="", flush=True)
 
-    response = chatbot.retrieve_topic_info(
+    response = chatbot.fetch_topic_details(
         model=Planet,
         topic="Neptune",
         # 2 moons is incorrect, but let's see how the model handles it
