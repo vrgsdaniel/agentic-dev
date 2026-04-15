@@ -16,17 +16,15 @@ class AzureLLMSettings(BaseSettings):
     env: str = "dev"
     azure_openai_endpoint: str = ""
     azure_openai_api_key: str = ""
+    azure_embeddings_deployment: str = "text-embedding-3-small"
+    azure_embeddings_version: str = "2024-12-01-preview"
     temperature: float = 0.7
     max_retries: int = 3
 
     @computed_field
     @property
     def azure_deployment(self) -> str:
-        return (
-            "Entity_Extractor_GPT4.1_TEST"
-            if self.env == "prd"
-            else "Document_Extractor_GPT4.1_TEST"
-        )
+        return "Entity_Extractor_GPT4.1_TEST" if self.env == "prd" else "Document_Extractor_GPT4.1_TEST"
 
     @computed_field
     @property

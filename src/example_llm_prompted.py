@@ -1,17 +1,15 @@
 from src.llm import ChatbotFactory
+from utils import print_stream
 
 
 if __name__ == "__main__":
-    chatbot = ChatbotFactory.create_chatbot(
-        vendor="azure", stream_responses=False, batch_requests=False
-    )
+    chatbot = ChatbotFactory.create_chatbot(vendor="azure", stream_responses=False, batch_requests=False)
     response = chatbot.explain_topic(
         topic="heavy water reactors",
         role="physics professor",
         level="elementary school",
     )
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    print_stream(response)
 
     print("\n=========================\n")
 
@@ -21,5 +19,4 @@ if __name__ == "__main__":
         role="Python expert",
         level="simple, concise, examples-based",
     )
-    for chunk in response:
-        print(chunk, end="", flush=True)
+    print_stream(response)

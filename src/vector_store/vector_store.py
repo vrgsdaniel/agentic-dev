@@ -1,25 +1,17 @@
 from typing import List
 
-from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.embeddings import Embeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 class VectorStore:
     def __init__(
         self,
         embeddings: Embeddings,
-        chunk_size: int = 500,
-        chunk_overlap: int = 50,
         **kwargs,
     ):
         self.embeddings = embeddings
-        self.splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
         self._store = None
 
     def as_retriever(self, **kwargs) -> BaseRetriever:
@@ -27,13 +19,6 @@ class VectorStore:
 
     def add(self, documents: List[Document]) -> None:
         self._store.add_documents(documents)
-
-    def load(self, source: str) -> List[Document]:
-        loader = PyPDFLoader(source) if source.endswith(".pdf") else TextLoader(source)
-        return loader.load()
-
-    def split(self, documents: List[Document]) -> List[Document]:
-        return self.splitter.split_documents(documents)
 
     def persist(self) -> None:
         """Persist the store to disk if supported."""
