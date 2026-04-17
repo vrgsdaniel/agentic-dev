@@ -3,6 +3,7 @@ from typing import List
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.embeddings import Embeddings
+from langsmith import traceable
 
 
 class VectorStore:
@@ -17,6 +18,7 @@ class VectorStore:
     def as_retriever(self, **kwargs) -> BaseRetriever:
         return self._store.as_retriever(**kwargs)
 
+    @traceable(name="vector-store-load")
     def add(self, documents: List[Document]) -> None:
         self._store.add_documents(documents)
 

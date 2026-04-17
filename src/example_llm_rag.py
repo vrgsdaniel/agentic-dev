@@ -17,11 +17,13 @@ if __name__ == "__main__":
         vector_store.add(text_processor.split(documents=documents))
 
         chatbot.set_rag_chain(vector_store.as_retriever(search_kwargs={"k": 6}))
+        response = chatbot.ask_with_context("What is a skip list?")
+        print_stream(response)
     else:
         embeddings = EmbeddingsFactory.create_embeddings(vendor="azure")
         vector_store = VectorStoreFactory.create_(vendor="chroma", embeddings=embeddings)
         chatbot = ChatbotFactory.create_chatbot(vendor="azure", stream_responses=True, batch_requests=False)
         chatbot.set_rag_chain(vector_store.as_retriever(search_kwargs={"k": 6}))
 
-        response = chatbot.ask_with_context("What is a barycentre?")
+        response = chatbot.ask_with_context("What is a skip list??")
         print_stream(response)

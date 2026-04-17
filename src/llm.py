@@ -1,5 +1,6 @@
 from typing import List
 
+from langsmith import traceable
 from langchain_core.runnables import Runnable, RunnableLambda, RunnableParallel, RunnablePassthrough
 from langchain_openai import AzureChatOpenAI
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -46,6 +47,7 @@ class Chatbot:
         """
         raise NotImplementedError("Subclasses must implement _build_llm() to return an LLM instance.")
 
+    @traceable(name="my-rag-pipeline")
     def _run(self, chain, input):
         if self.stream_responses:
             return chain.stream(input)
@@ -82,8 +84,7 @@ class Chatbot:
         self.rag_chain = (
             RunnableParallel(
                 {
-                    "context": retriever
-                    | RunnableLambda(lambda docs: "\n\n".join(d.page_content for d in docs)),
+                    "context": retriever | RunnableLambda(lambda docs: "\n\n".join(d.page_content for d in docs)),
                     "question": RunnablePassthrough(),
                 }
             )
