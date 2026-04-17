@@ -3,7 +3,7 @@ from src.utils import TextProcessor, print_stream
 from src.vector_store.embeddings import EmbeddingsFactory
 from src.vector_store.vector_store import VectorStoreFactory
 
-FULLY_LOAD = False
+FULLY_LOAD = True
 
 if __name__ == "__main__":
     if FULLY_LOAD:

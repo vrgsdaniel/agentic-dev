@@ -19,5 +19,7 @@ class EmbeddingsFactory:
                 model=settings.azure_embeddings_deployment,
                 deployment=settings.azure_embeddings_deployment,
                 api_version=settings.azure_embeddings_version,
+                azure_endpoint=settings.azure_openai_endpoint,
+                api_key=settings.azure_openai_api_key.get_secret_value(),
             )
         raise ValueError(f"Unsupported embeddings vendor: {vendor}")
