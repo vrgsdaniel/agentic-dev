@@ -2,8 +2,7 @@ from typing import List
 
 from pydantic import BaseModel, Field, field_validator
 from src.llm import ChatbotFactory
-
-from utils import print_stream
+from src.utils import print_stream
 
 
 class Planet(BaseModel):

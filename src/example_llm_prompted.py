@@ -1,5 +1,5 @@
 from src.llm import ChatbotFactory
-from utils import print_stream
+from src.utils import print_stream
 
 
 if __name__ == "__main__":

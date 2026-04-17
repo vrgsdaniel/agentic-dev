@@ -1,8 +1,7 @@
 from src.llm import ChatbotFactory
-
-from utils import TextProcessor, print_stream
-from vector_store.embeddings import EmbeddingsFactory
-from vector_store.vector_store import VectorStoreFactory
+from src.utils import TextProcessor, print_stream
+from src.vector_store.embeddings import EmbeddingsFactory
+from src.vector_store.vector_store import VectorStoreFactory
 
 FULLY_LOAD = False
 

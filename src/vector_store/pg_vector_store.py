@@ -1,7 +1,7 @@
 from langchain_postgres.vectorstores import PGVector
 from langchain_core.embeddings import Embeddings
 
-from vector_store.vector_store import VectorStore
+from src.vector_store.vector_store import VectorStore
 
 
 class PGVectorStore(VectorStore):

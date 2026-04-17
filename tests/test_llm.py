@@ -102,7 +102,7 @@ class TestChat:
         assert result == ["r1", "r2"]
 
 
-# -- explain_topic / retrieve_topic_info chain wiring ------------------------
+# -- explain_topic / fetch_topic_details chain wiring ------------------------
 
 
 class TestChainMethods:
@@ -113,13 +113,13 @@ class TestChainMethods:
             input_dict = mock_run.call_args[0][1]
             assert input_dict == {"role": "teacher", "topic": "gravity", "level": "simple"}
 
-    def test_retrieve_topic_info_invokes_chain(self, bot):
+    def test_fetch_topic_details_invokes_chain(self, bot):
         class Planet(BaseModel):
             name: str = Field(description="Planet name")
             moons: int = Field(description="Number of moons")
 
         with patch.object(bot, "_run", return_value=Planet(name="Mars", moons=2)) as mock_run:
-            result = bot.retrieve_topic_info(model=Planet, topic="Mars", text="")
+            result = bot.fetch_topic_details(model=Planet, topic="Mars", text="")
             assert result.name == "Mars"
             input_dict = mock_run.call_args[0][1]
             assert input_dict["topic"] == "Mars"
