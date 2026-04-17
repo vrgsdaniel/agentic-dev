@@ -47,7 +47,7 @@ class Chatbot:
         """
         raise NotImplementedError("Subclasses must implement _build_llm() to return an LLM instance.")
 
-    @traceable(name="my-rag-pipeline")
+    @traceable(name="chain-execution")
     def _run(self, chain, input):
         if self.stream_responses:
             return chain.stream(input)
@@ -111,7 +111,7 @@ class AzureChatbot(Chatbot):
             azure_endpoint=self._settings.azure_openai_endpoint,
             azure_deployment=self._settings.azure_deployment,
             openai_api_version=self._settings.open_ai_version,
-            api_key=self._settings.azure_openai_api_key,
+            api_key=self._settings.azure_openai_api_key.get_secret_value(),
             temperature=self._settings.temperature,
             max_retries=self._settings.max_retries,
         )

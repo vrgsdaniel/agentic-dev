@@ -33,7 +33,7 @@ class VectorStore:
 
 class VectorStoreFactory:
     @staticmethod
-    def create_(vendor: str, embeddings: Embeddings, **kwargs) -> VectorStore:
+    def create_vector_store(vendor: str, embeddings: Embeddings, **kwargs) -> VectorStore:
         if vendor == "chroma":
             from src.vector_store.chroma_vector_store import ChromaVectorStore
 

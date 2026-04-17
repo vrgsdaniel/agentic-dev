@@ -16,7 +16,7 @@ class EmbeddingsFactory:
             settings = AzureLLMSettings()
 
             return AzureOpenAIEmbeddings(
-                model="text-embedding-3-small",
+                model=settings.azure_embeddings_deployment,
                 deployment=settings.azure_embeddings_deployment,
                 api_version=settings.azure_embeddings_version,
             )

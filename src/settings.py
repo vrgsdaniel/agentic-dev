@@ -1,4 +1,4 @@
-from pydantic import computed_field
+from pydantic import SecretStr, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,7 +15,16 @@ class AzureLLMSettings(BaseSettings):
 
     env: str = "dev"
     azure_openai_endpoint: str = ""
-    azure_openai_api_key: str = ""
+    azure_openai_api_key: SecretStr = SecretStr("")
+
+    @model_validator(mode="after")
+    def _check_required(self):
+        if not self.azure_openai_endpoint:
+            raise ValueError("azure_openai_endpoint must be set")
+        if not self.azure_openai_api_key.get_secret_value():
+            raise ValueError("azure_openai_api_key must be set")
+        return self
+
     azure_embeddings_deployment: str = "text-embedding-3-small"
     azure_embeddings_version: str = "2024-12-01-preview"
     temperature: float = 0.7
